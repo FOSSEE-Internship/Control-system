@@ -1,12 +1,13 @@
 function[varargout]=impulse(varargin)
     //Author:- Paresh Yeole emailid:-yeoleparesh@students.vnit.ac.in
 //Gives the impulse response of continuos and discrete SISO as well as MIMO  systems  
-//
+////
 //calling sequence:-
 //impulse(sys)
 //impulse(poly1,poly2)
 //impulse(sys,Tfinal)
 //impulse(sys,Tvector)
+//impulse(SISOarray,%T)
 //impulse(sys1,sys2,...,T)
 //impulse(sys1,'r',sys2,'y--',sys3,'gx',..)
 //[Y,t]=impulse(sys)
@@ -45,6 +46,7 @@ function[varargout]=impulse(varargin)
 
 
     [lhs,rhs]=argn(0);
+    
     nd=length(varargout);
     ni=length(varargin);
     flag=0;
@@ -157,6 +159,7 @@ function[varargout]=impulse(varargin)
             
             if typeof(varargin(i))=='state-space' then
                 varargin(i)=ss2tf(varargin(i));
+                
             end
             
             /////////////////////////SISO system//////////////////////////////
@@ -173,12 +176,16 @@ function[varargout]=impulse(varargin)
                 y=flts(eye(1,length(t)),varargin(i));
             end
              if or(ppr > 0) then
-                 ch=find(y>=10^12 | y<=-10^12);
+                 //ch=find(y>=10^12 | y<=-10^12);
                  //disp(ch);
+                 dompol=max(ppr);
+                 tfinal=25/(dompol*log10(%e));
                   if((varargin(i).dt)<>'c') then
-                     t=0:varargin(i).dt:t(ch(1));
+                    // t=0:varargin(i).dt:t(ch(1));
+                    t=0:varargin(i).dt:tfinal;
                   else
-                     t=0:0.1:t(ch(1))
+                     //t=0:0.1:t(ch(1))
+                     t=0:0.1:tfinal;
                   end
              elseif and(ppr<=0) then
                 
@@ -230,7 +237,7 @@ function[varargout]=impulse(varargin)
        
     
         ////////////////SISO array///////////////////////////
-     elseif typeof(varargin(i))=='rational' & size(varargin(i),'*')<>1 & rhs<>1 & typeof(varargin(i+1))=='boolean' then
+     elseif typeof(varargin(i))=='rational' & size(varargin(i),'*')<>1 & i<>rhs & rhs<>1 & typeof(varargin(i+1))=='boolean' then
          if(varargin(i+1)<>%T   ) then
              error(msprintf("impulse:wrong input arguments"));
          end
@@ -253,9 +260,12 @@ function[varargout]=impulse(varargin)
                 y=flts(eye(1,length(t)),tt(ii,jj,kk));
             end
               if or(ppr > 0) then
-                 ch=find(y>10^8 | y<-10^8);
-                  //temp=100;
-                  temp=t(ch(1));
+                  dompol=max(ppr);
+                 tfinal=25/(dompol*log10(%e));
+                 temp(ii,jj)=tfinal;
+//                 ch=find(y>10^8 | y<-10^8);
+//                  //temp=100;
+//                  temp=t(ch(1));
              elseif and(ppr<=0) then
                 for iii=length(t):-1:1
                   if(y(iii)<-0.002 | y(iii)>0.002) then
@@ -345,7 +355,9 @@ elseif ((typeof(varargin(i))=='rational') & (size(varargin(i),'*')<>1)) then
                   //ch=find(y>=10^12 | y<=-10^12);
                   //temp=t(ch(1));
                   //disp(temp);
-                 temp=100;
+                  dompol=max(ppr);
+                 tfinal=25/(dompol*log10(%e));
+                 temp(ii,jj)=tfinal;
               elseif and(ppr<=0) then
                 for iii=length(t):-1:1
                   if(y(iii)<-0.002 | y(iii)>0.002) then
@@ -461,7 +473,9 @@ if(typeof(varargin(1))=='polynomial') then
              pp=cell2mat(pp);
               ppr=real(pp)
              if or(ppr >= 0) then
-                  t=0:0.1:100
+                 dompol=max(ppr);
+                 tfinal=25/(dompol*log10(%e));
+                  t=0:0.1:tfinal;
              elseif and(ppr<0) then
                 y=csim('impuls',t,varargin(1)/varargin(2));
                  for iii=length(t):-1:1
